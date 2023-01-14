@@ -3,10 +3,15 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const User = require("./model/userSchema");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 const app = express();
 app.use(express.json());
 const { hp } = require("./helpers/hashpassword");
 const emailvalidation = require("./helpers/emailvalidation.js");
+const test = require("./middleware/test");
+const { getMaxListeners } = require("./model/userSchema");
+const env = require("dotenv").config({ path: "./.env" });
+console.log(process.env);
 
 mongoose.connect(
   "mongodb+srv://shoebabedin12:shoebabedin12@cluster0.rzej111.mongodb.net/oreby?retryWrites=true&w=majority",
@@ -29,7 +34,7 @@ app.post("/registration", async function (req, res) {
     postcode,
     state,
     password,
-    terms
+    terms,
   } = req.body;
 
   let emailvali = await emailvalidation(email);
@@ -63,22 +68,43 @@ app.post("/registration", async function (req, res) {
         state,
         password: pass,
         terms,
-        token: token
+        token: token,
       });
-      
+
       user.save();
       res.send("Registration Successfull");
     }
   );
-  
 });
 
-
 // 01645394660
-app.get("/users", async function (req, res) {
-  let data = await User.find({}).select("-password")
-  res.send(data);
+app.get("/users", test, function (req, res) {
+  // let data = await User.find({}).select("-password")
+  // res.send(data);
+  console.log("hi");
+});
 
+app.get("/email", async function (req, res) {
+  let testAccount = await nodemailer.createTestAccount();
+  let transporter = nodemailer.createTransport({
+    service: "gmail",
+    name: "shoeb",
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.PASS,
+    },
+  });
+
+  let info = await transporter.sendMail({
+    from: { name: process.env.COMPANY_NAME, address: process.env.EMAIL },
+    to: "shoebabedin14@gmail.com",
+    subject: "Reba",
+    text: "Reba",
+    html: '<p>hi Reba</p>',
+   
+  });
+
+  res.send("Mail Sent");
 });
 
 app.listen(5000, () => {
